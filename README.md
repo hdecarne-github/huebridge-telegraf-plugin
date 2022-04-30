@@ -73,6 +73,15 @@ Every motion sensor is reported including the corresponding device. The motion v
 
 ![Motion](docs/screen_motion.png)
 
+#### Device power stats
+Device power stats are reported via the **huebridge_device_power** measurement:
+```
+huebridge_device_power,huebridge_device=Motion\ sensor\ 1,huebridge_url=https://huebridge1.local battery_level=100i 1651342467380821000
+```
+Every device power state is reported including the corresponding device.
+
+![DevicePower](docs/screen_device_power.png)
+
 ### License
 This project is subject to the the MIT License.
 See [LICENSE](./LICENSE) information for details.

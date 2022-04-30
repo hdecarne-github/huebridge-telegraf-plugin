@@ -51,6 +51,7 @@ func TestGather1(t *testing.T) {
 	require.True(t, a.HasMeasurement("huebridge_temperature"))
 	require.True(t, a.HasMeasurement("huebridge_light_level"))
 	require.True(t, a.HasMeasurement("huebridge_motion"))
+	require.True(t, a.HasMeasurement("huebridge_device_power"))
 }
 
 func TestGather2(t *testing.T) {
@@ -125,6 +126,8 @@ func (tsh *testServerHandler) ServeHTTP(out http.ResponseWriter, request *http.R
 		tsh.serveResourceLightLevel(out, request)
 	} else if requestURL == "/clip/v2/resource/motion" {
 		tsh.serveResourceMotion(out, request)
+	} else if requestURL == "/clip/v2/resource/device_power" {
+		tsh.serveResourceDevicePower(out, request)
 	} else if requestURL == "/clip/v2/resource/device" {
 		tsh.serveResourceDevice(out, request)
 	} else if requestURL == "/clip/v2/resource/room" {
@@ -313,6 +316,33 @@ const testResourceMotion = `
 
 func (tsh *testServerHandler) serveResourceMotion(out http.ResponseWriter, request *http.Request) {
 	tsh.writeJSON(out, testResourceMotion)
+}
+
+const testResourceDevicePower = `
+{
+	"errors":[
+	  
+	],
+	"data":[
+	  {
+		"id":"52d23eb6-c9b5-4641-b873-3d441888c34b",
+		"id_v1":"/sensors/4",
+		"owner":{
+		  "rid":"92cd53c4-abff-437c-bb21-1733e74c5df5",
+		  "rtype":"device"
+		},
+		"power_state":{
+		  "battery_level":100,
+		  "battery_state":"normal"
+		},
+		"type":"device_power"
+	  }
+	]
+  }
+`
+
+func (tsh *testServerHandler) serveResourceDevicePower(out http.ResponseWriter, request *http.Request) {
+	tsh.writeJSON(out, testResourceDevicePower)
 }
 
 const testResourceDevice = `

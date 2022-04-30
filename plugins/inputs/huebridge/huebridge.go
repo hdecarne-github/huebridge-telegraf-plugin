@@ -112,6 +112,12 @@ func (hb *HueBridge) processBridge(a telegraf.Accumulator, bridgeUrl string, app
 	} else {
 		a.AddError(fmt.Errorf("Failed to eval motions (cause: %w)", err))
 	}
+	devicePowers, err := hb.fetchDevicePowers(a, bridgeUrl, applicationKey)
+	if err == nil {
+		hb.evalDevicePowers(a, bridgeUrl, devicePowers, devices)
+	} else {
+		a.AddError(fmt.Errorf("Failed to eval motions (cause: %w)", err))
+	}
 	return nil
 }
 
@@ -179,6 +185,18 @@ func (hb *HueBridge) evalMotions(a telegraf.Accumulator, bridgeUrl string, motio
 	}
 }
 
+func (hb *HueBridge) evalDevicePowers(a telegraf.Accumulator, bridgeUrl string, devicePowers *devicePowersStatus, devices *devicesList) {
+	for _, devicePower := range devicePowers.Data {
+		devicePowerDeviceName := devicePower.Owner.getDeviceName(devices)
+		tags := make(map[string]string)
+		tags["huebridge_url"] = bridgeUrl
+		tags["huebridge_device"] = devicePowerDeviceName
+		fields := make(map[string]interface{})
+		fields["battery_level"] = devicePower.PowerState.BatteryLevel
+		a.AddCounter("huebridge_device_power", fields, tags)
+	}
+}
+
 type lightsStatus struct {
 	Data []lightData `json:"data"`
 }
@@ -237,8 +255,23 @@ type motionMotion struct {
 	MotionValid bool `json:"motion_valid"`
 }
 
+type devicePowersStatus struct {
+	Data []devicePowerData `json:"data"`
+}
+
+type devicePowerData struct {
+	PowerState devicePowerState `json:"power_state"`
+	Owner      resourceLink     `json:"owner"`
+}
+
+type devicePowerState struct {
+	BatteryState string `json:"battery_state"`
+	BatteryLevel int    `json:"battery_level"`
+}
+
 type devicesList struct {
-	Data []deviceData `json:"data"`
+	Data      []deviceData `json:"data"`
+	findCache map[string]*deviceData
 }
 
 func (ds *devicesList) findDeviceData(deviceId string) *deviceData {
@@ -354,6 +387,16 @@ func (hb *HueBridge) fetchMotions(a telegraf.Accumulator, bridgeUrl string, appl
 		return nil, err
 	}
 	return &motionsStatus, nil
+}
+
+func (hb *HueBridge) fetchDevicePowers(a telegraf.Accumulator, bridgeUrl string, applicationKey string) (*devicePowersStatus, error) {
+	var devicePowersStatus devicePowersStatus
+
+	_, err := hb.fetchJSON(bridgeUrl, applicationKey, "/clip/v2/resource/device_power", &devicePowersStatus)
+	if err != nil {
+		return nil, err
+	}
+	return &devicePowersStatus, nil
 }
 
 func (hb *HueBridge) fetchDevices(a telegraf.Accumulator, bridgeUrl string, applicationKey string) (*devicesList, error) {
