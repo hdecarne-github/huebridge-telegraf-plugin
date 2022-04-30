@@ -1,37 +1,74 @@
-## Welcome to GitHub Pages
+## About huebridge-telegraf-plugin
+This [Telegraf](https://github.com/influxdata/telegraf) input plugin gathers stats from [Hue Bridge](https://www.philips-hue.com/) devices. It uses the device's [CLIP API](https://developers.meethue.com/develop/hue-api-v2/) interface to retrieve the stats. Lights status as well as Motion sensor data is retrieved.
 
-You can use the [editor on GitHub](https://github.com/hdecarne-github/huebridge-telegraf-plugin/edit/main/docs/index.md) to maintain and preview the content for your website in Markdown files.
+### Installation
+To install the plugin you have to download a suitable [release archive](https://github.com/hdecarne-github/huebridge-telegraf-plugin/releases) and extract it or build it from source by cloning the repository and issueing a simple
+```
+make
+```
+To build the plugin, Go version 1.16 or higher is required. The resulting plugin binary will be written to **./build/bin**.
+Copy the either extracted or built plugin binary to a location of your choice (e.g. /usr/local/bin/telegraf/).
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+### Configuration
+This is an [external plugin](https://github.com/influxdata/telegraf/blob/master/docs/EXTERNAL_PLUGINS.md) which has to be integrated via Telegraf's [excecd plugin](https://github.com/influxdata/telegraf/tree/master/plugins/inputs/execd).
 
-### Markdown
+To use it you have to create a plugin specific config file (e.g. /etc/telegraf/huebridge.conf) with following template content:
+```toml
+[[inputs.huebridge]]
+  ## The Hue bridges to query (multiple tuples of base url, application key)
+  ## To create a application key issue the following command line for the targeted Hue bridge:
+  ## curl -X POST http://<bridge IP or DNS name>/api -H 'Content-Type: application/json' -d '{"devicetype":"huebridge-telegraf-plugin"}'
+  bridges = [["https://<insert IP or DNS name>", "<insert application key>"]]
+  ## The http timeout to use (in seconds)
+  # timeout = 5
+  ## Enable debug output
+  # debug = false
+```
+The most important setting is the **bridges** line. It defines the base URLs of devices to query as well as the application key to use for authentication. At least one device has to be defined.
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
-
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
+To enable the plugin within your Telegraf instance, add the following section to your **telegraf.conf**
+```toml
+[[inputs.execd]]
+  command = ["/usr/local/lib/telegraf/huebridge-telegraf-plugin", "-config", "/etc/telegraf/huebridge.conf", "-poll_interval", "10s"]
+  signal = "none"
 ```
 
-For more details see [Basic writing and formatting syntax](https://docs.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax).
+#### Lights stats
+Lights stats are reported via the **huebridge_light** measurement:
+```
+huebridge_light,huebridge_device=Lamp\ 1,huebridge_room=Room\ 1,huebridge_url=https://huebridge1.local on=0i 1651298875981339000
+```
+Every light is reported including the corresponding device and room name (if assigned). The on value indicates the state (0: off 1: on).
 
-### Jekyll Themes
+![Lights](./screen_lights.png)
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/hdecarne-github/huebridge-telegraf-plugin/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
+#### Temperature stats
+Temperature stats are reported via the **huebridge_temperature** measurement:
+```
+huebridge_temperature,huebridge_device=Motion\ sensor\ 1,huebridge_url=https://huebridge1.local temperature=20.030000686645508 1651300700525983000
+```
+Every temperature sensor is reported including the corresponding device.
 
-### Support or Contact
+![Sensors](./screen_sensors.png)
 
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+#### Light level stats
+Light level stats are reported via the **huebridge_light_level** measurement:
+```
+huebridge_light_level,huebridge_device=Motion\ sensor\ 1,huebridge_url=https://huebridge1.local light_level=6551,light_level_lux=4.518559443749223 1651300700650794000
+```
+Every light level sensor is reported including the corresponding device. The actual level value (light_level) as well as it's correspondig lux value (light_level_lux) is reported.
+
+![Sensors](./screen_sensors.png)
+
+#### Motion stats
+Motion stats are reported via the **huebridge_motion** measurement:
+```
+huebridge_motion,huebridge_device=Motion\ sensor\ 1,huebridge_url=https://huebridge1.local motion=0i 1651300700769486000
+```
+Every motion sensor is reported including the corresponding device. The motion value indicates the state (0: No motion 1: Motion detected).
+
+![Motion](./screen_motion.png)
+
+### License
+This project is subject to the the MIT License.
+See [LICENSE](../LICENSE) information for details.
