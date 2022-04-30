@@ -53,6 +53,20 @@ func TestGather1(t *testing.T) {
 	require.True(t, a.HasMeasurement("huebridge_motion"))
 }
 
+func TestGather2(t *testing.T) {
+	testServerHandler := &testServerHandler{Debug: true}
+	testServer := httptest.NewServer(testServerHandler)
+	defer testServer.Close()
+	hb := NewHueBridge()
+	hb.Bridges = [][]string{{testServer.URL, "invalid_applicationkey"}}
+	hb.Log = createDummyLogger()
+	hb.Debug = testServerHandler.Debug
+
+	var a testutil.Accumulator
+
+	require.Error(t, a.GatherError(hb.Gather))
+}
+
 func createDummyLogger() *dummyLogger {
 	log.SetOutput(os.Stderr)
 	return &dummyLogger{}
@@ -129,7 +143,7 @@ const testResourceLight = `
 		"id_v1":"/lights/4",
 		"metadata":{
 		  "archetype":"candle_bulb",
-		  "name":"Lampe Arbeitszimmer 3"
+		  "name":"Lamp 1"
 		},
 		"mode":"normal",
 		"on":{
@@ -146,7 +160,7 @@ const testResourceLight = `
 		"id_v1":"/lights/8",
 		"metadata":{
 		  "archetype":"sultan_bulb",
-		  "name":"Lampe Flur 1"
+		  "name":"Lamp 2"
 		},
 		"mode":"normal",
 		"on":{
@@ -163,7 +177,7 @@ const testResourceLight = `
 		"id_v1":"/lights/2",
 		"metadata":{
 		  "archetype":"classic_bulb",
-		  "name":"Lampe Flur 3"
+		  "name":"Lamp 3"
 		},
 		"mode":"normal",
 		"on":{
@@ -180,7 +194,7 @@ const testResourceLight = `
 		"id_v1":"/lights/9",
 		"metadata":{
 		  "archetype":"sultan_bulb",
-		  "name":"Lampe Flur 2"
+		  "name":"Lamp 4"
 		},
 		"mode":"normal",
 		"on":{
@@ -197,7 +211,7 @@ const testResourceLight = `
 		"id_v1":"/lights/7",
 		"metadata":{
 		  "archetype":"candle_bulb",
-		  "name":"Lampe Arbeitszimmer 4"
+		  "name":"Lamp 5"
 		},
 		"mode":"normal",
 		"on":{
@@ -312,7 +326,7 @@ const testResourceDevice = `
 		"id_v1":"/lights/3",
 		"metadata":{
 		  "archetype":"sultan_bulb",
-		  "name":"Lampe Wohnzimmer 1"
+		  "name":"Lamp 1"
 		},
 		"type":"device"
 	  },
@@ -321,7 +335,7 @@ const testResourceDevice = `
 		"id_v1":"/lights/4",
 		"metadata":{
 		  "archetype":"candle_bulb",
-		  "name":"Lampe Arbeitszimmer 3"
+		  "name":"Lamp 2"
 		},
 		"type":"device"
 	  },
@@ -330,7 +344,7 @@ const testResourceDevice = `
 		"id_v1":"/lights/12",
 		"metadata":{
 		  "archetype":"sultan_bulb",
-		  "name":"Lampe Schlafzimmer 1"
+		  "name":"Lamp 3"
 		},
 		"type":"device"
 	  },
@@ -339,7 +353,7 @@ const testResourceDevice = `
 		"id_v1":"/lights/8",
 		"metadata":{
 		  "archetype":"sultan_bulb",
-		  "name":"Lampe Flur 1"
+		  "name":"Lamp 4"
 		},
 		"type":"device"
 	  },
@@ -348,7 +362,7 @@ const testResourceDevice = `
 		"id_v1":"/lights/6",
 		"metadata":{
 		  "archetype":"candle_bulb",
-		  "name":"Lampe Arbeitszimmer 1"
+		  "name":"Lamp 5"
 		},
 		"type":"device"
 	  },
@@ -357,7 +371,7 @@ const testResourceDevice = `
 		"id_v1":"/lights/2",
 		"metadata":{
 		  "archetype":"classic_bulb",
-		  "name":"Lampe Flur 3"
+		  "name":"Lamp 6"
 		},
 		"type":"device"
 	  },
@@ -366,7 +380,7 @@ const testResourceDevice = `
 		"id_v1":"/lights/5",
 		"metadata":{
 		  "archetype":"candle_bulb",
-		  "name":"Lampe Arbeitszimmer 2"
+		  "name":"Lamp 7"
 		},
 		"type":"device"
 	  },
@@ -384,7 +398,7 @@ const testResourceDevice = `
 		"id_v1":"/lights/9",
 		"metadata":{
 		  "archetype":"sultan_bulb",
-		  "name":"Lampe Flur 2"
+		  "name":"Lamp 8"
 		},
 		"type":"device"
 	  },
@@ -393,7 +407,7 @@ const testResourceDevice = `
 		"id_v1":"/lights/11",
 		"metadata":{
 		  "archetype":"sultan_bulb",
-		  "name":"Lampe Schlafzimmer 2"
+		  "name":"Lamp 9"
 		},
 		"type":"device"
 	  },
@@ -402,7 +416,7 @@ const testResourceDevice = `
 		"id_v1":"/lights/7",
 		"metadata":{
 		  "archetype":"candle_bulb",
-		  "name":"Lampe Arbeitszimmer 4"
+		  "name":"Lamp 10"
 		},
 		"type":"device"
 	  },
@@ -411,7 +425,7 @@ const testResourceDevice = `
 		"id_v1":"/sensors/4",
 		"metadata":{
 		  "archetype":"unknown_archetype",
-		  "name":"Bewegungsmelder"
+		  "name":"Motion sensor"
 		},
 		"type":"device"
 	  }

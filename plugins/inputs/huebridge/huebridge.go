@@ -46,11 +46,10 @@ func NewHueBridge() *HueBridge {
 
 func (hb *HueBridge) SampleConfig() string {
 	return `
-  [[inputs.huebridge]]
-  ## The Hue bridges to query (multiple tuples of base url, username)
-  ## To create a username issue the following command line for the targeted Hue bridge:
+  ## The Hue bridges to query (multiple tuples of base url, application key)
+  ## To create a application key issue the following command line for the targeted Hue bridge:
   ## curl -X POST http://<bridge IP or DNS name>/api -H 'Content-Type: application/json' -d '{"devicetype":"huebridge-telegraf-plugin"}'
-  bridges = [["http://192.168.1.2", ""]]
+  bridges = [["https://<insert IP or DNS name>", "<insert application key>"]]
   ## The http timeout to use (in seconds)
   # timeout = 5
   ## Enable debug output
@@ -287,8 +286,11 @@ type resourceLink struct {
 	Rtype string `json:"rtype"`
 }
 
+const undefinedDevice = "<undefined>"
+const unassignedDevice = "<unassigned>"
+
 func (rl *resourceLink) getDeviceName(devices *devicesList) string {
-	deviceName := "<undefined>"
+	deviceName := undefinedDevice
 	if rl.Rtype == "device" {
 		device := devices.findDeviceData(rl.Rid)
 		if device != nil {
@@ -299,8 +301,8 @@ func (rl *resourceLink) getDeviceName(devices *devicesList) string {
 }
 
 func (rl *resourceLink) getDeviceAndRoomName(devices *devicesList, rooms *roomsList) (string, string) {
-	deviceName := "<undefined>"
-	roomName := "<unassigned>"
+	deviceName := undefinedDevice
+	roomName := unassignedDevice
 	if rl.Rtype == "device" {
 		device := devices.findDeviceData(rl.Rid)
 		if device != nil {
@@ -398,6 +400,9 @@ func (hb *HueBridge) fetchJSON(bridgeUrl string, applicationKey string, path str
 		return jsonUrl, err
 	}
 	defer response.Body.Close()
+	if response.StatusCode != http.StatusOK {
+		return jsonUrl, fmt.Errorf("Failed to retrieve json data from %s (%s)", jsonUrl, response.Status)
+	}
 	return jsonUrl, json.NewDecoder(response.Body).Decode(v)
 }
 
