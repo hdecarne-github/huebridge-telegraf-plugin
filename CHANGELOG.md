@@ -1,4 +1,4 @@
-This [Telegraf](https://github.com/influxdata/telegraf) input plugin gathers stats from [Hue Bridge](https://www.philips-hue.com/) devices. It uses the device's [CLIP API](https://developers.meethue.com/develop/hue-api-v2/) interfaces to retrieve the stats. Light status as well as Motion sensor data is retrieved.
+This [Telegraf](https://github.com/influxdata/telegraf) input plugin gathers stats from [Hue Bridge](https://www.philips-hue.com/) devices. It uses the device's [CLIP API](https://developers.meethue.com/develop/hue-api-v2/) interface to retrieve the stats. Light status as well as Motion sensor data is retrieved.
 
 This software may be modified and distributed under the terms
 of the MIT license.  See the LICENSE file for details.
