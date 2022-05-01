@@ -46,24 +46,6 @@ Every light is reported including the corresponding device and room name (if ass
 
 ![Lights](docs/screen_lights.png)
 
-#### Temperature stats
-Temperature stats are reported via the **huebridge_temperature** measurement:
-```
-huebridge_temperature,huebridge_device=Motion\ sensor\ 1,huebridge_url=https://huebridge1.local temperature=20.030000686645508 1651300700525983000
-```
-Every temperature sensor is reported including the corresponding device.
-
-![Sensors](docs/screen_sensors.png)
-
-#### Light level stats
-Light level stats are reported via the **huebridge_light_level** measurement:
-```
-huebridge_light_level,huebridge_device=Motion\ sensor\ 1,huebridge_url=https://huebridge1.local light_level=6551,light_level_lux=4.518559443749223 1651300700650794000
-```
-Every light level sensor is reported including the corresponding device. The actual level value (light_level) as well as it's correspondig lux value (light_level_lux) is reported.
-
-![Sensors](docs/screen_sensors.png)
-
 #### Motion stats
 Motion stats are reported via the **huebridge_motion** measurement:
 ```
@@ -73,12 +55,29 @@ Every motion sensor is reported including the corresponding device. The motion v
 
 ![Motion](docs/screen_motion.png)
 
+#### Temperature stats
+Temperature stats are reported via the **huebridge_temperature** measurement:
+```
+huebridge_temperature,huebridge_device=Motion\ sensor\ 1,huebridge_url=https://huebridge1.local temperature=20.030000686645508 1651300700525983000
+```
+Every temperature sensor is reported including the corresponding device.
+
+![Sensors](docs/screen_temperature.png)
+
+#### Light level stats
+Light level stats are reported via the **huebridge_light_level** measurement:
+```
+huebridge_light_level,huebridge_device=Motion\ sensor\ 1,huebridge_url=https://huebridge1.local light_level=6551,light_level_lux=4.518559443749223 1651300700650794000
+```
+Every light level sensor is reported including the corresponding device. The actual level value (light_level) as well as it's correspondig lux value (light_level_lux) is reported.
+
+![Sensors](docs/screen_light_level.png)
+
 #### Device power stats
 Device power stats are reported via the **huebridge_device_power** measurement:
 ```
 huebridge_device_power,huebridge_device=Motion\ sensor\ 1,huebridge_url=https://huebridge1.local battery_level=100i 1651342467380821000
 ```
-Every device power state is reported including the corresponding device.
 
 ![DevicePower](docs/screen_device_power.png)
 
