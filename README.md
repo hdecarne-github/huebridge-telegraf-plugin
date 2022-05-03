@@ -33,7 +33,7 @@ The most important setting is the **bridges** line. It defines the base URLs of 
 To enable the plugin within your Telegraf instance, add the following section to your **telegraf.conf**
 ```toml
 [[inputs.execd]]
-  command = ["/usr/local/lib/telegraf/huebridge-telegraf-plugin", "-config", "/etc/telegraf/huebridge.conf", "-poll_interval", "10s"]
+  command = ["/usr/local/bin/telegraf/huebridge-telegraf-plugin", "-config", "/etc/telegraf/huebridge.conf", "-poll_interval", "10s"]
   signal = "none"
 ```
 
