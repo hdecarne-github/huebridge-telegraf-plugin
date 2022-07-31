@@ -1,4 +1,4 @@
-module github.com/hdecarne/huebridge-telegraf-plugin
+module github.com/hdecarne-github/huebridge-telegraf-plugin
 
 go 1.16
 
