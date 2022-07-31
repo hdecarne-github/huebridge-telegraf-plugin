@@ -4,7 +4,7 @@
 //
 // This software may be modified and distributed under the terms
 // of the MIT license.  See the LICENSE file for details.
-//
+
 package huebridge
 
 import (
@@ -19,19 +19,19 @@ import (
 )
 
 func TestInit(t *testing.T) {
-	hb := NewHueBridge()
-	require.NotNil(t, hb)
+	plugin := NewHueBridge()
+	require.NotNil(t, plugin)
 }
 
 func TestSampleConfig(t *testing.T) {
-	hb := NewHueBridge()
-	sampleConfig := hb.SampleConfig()
+	plugin := NewHueBridge()
+	sampleConfig := plugin.SampleConfig()
 	require.NotNil(t, sampleConfig)
 }
 
 func TestDescription(t *testing.T) {
-	hb := NewHueBridge()
-	description := hb.Description()
+	plugin := NewHueBridge()
+	description := plugin.Description()
 	require.NotNil(t, description)
 }
 
@@ -39,14 +39,14 @@ func TestGather1(t *testing.T) {
 	testServerHandler := &testServerHandler{Debug: true}
 	testServer := httptest.NewServer(testServerHandler)
 	defer testServer.Close()
-	hb := NewHueBridge()
-	hb.Bridges = [][]string{{testServer.URL, "applicationkey"}}
-	hb.Log = createDummyLogger()
-	hb.Debug = testServerHandler.Debug
+	plugin := NewHueBridge()
+	plugin.Bridges = [][]string{{testServer.URL, "applicationkey"}}
+	plugin.Log = createDummyLogger()
+	plugin.Debug = testServerHandler.Debug
 
 	var a testutil.Accumulator
 
-	require.NoError(t, a.GatherError(hb.Gather))
+	require.NoError(t, a.GatherError(plugin.Gather))
 	require.True(t, a.HasMeasurement("huebridge_light"))
 	require.True(t, a.HasMeasurement("huebridge_temperature"))
 	require.True(t, a.HasMeasurement("huebridge_light_level"))
@@ -58,14 +58,14 @@ func TestGather2(t *testing.T) {
 	testServerHandler := &testServerHandler{Debug: true}
 	testServer := httptest.NewServer(testServerHandler)
 	defer testServer.Close()
-	hb := NewHueBridge()
-	hb.Bridges = [][]string{{testServer.URL, "invalid_applicationkey"}}
-	hb.Log = createDummyLogger()
-	hb.Debug = testServerHandler.Debug
+	plugin := NewHueBridge()
+	plugin.Bridges = [][]string{{testServer.URL, "invalid_applicationkey"}}
+	plugin.Log = createDummyLogger()
+	plugin.Debug = testServerHandler.Debug
 
 	var a testutil.Accumulator
 
-	require.Error(t, a.GatherError(hb.Gather))
+	require.Error(t, a.GatherError(plugin.Gather))
 }
 
 func createDummyLogger() *dummyLogger {

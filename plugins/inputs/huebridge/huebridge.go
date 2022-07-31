@@ -4,7 +4,7 @@
 //
 // This software may be modified and distributed under the terms
 // of the MIT license.  See the LICENSE file for details.
-//
+
 package huebridge
 
 import (
@@ -20,13 +20,6 @@ import (
 	"github.com/influxdata/telegraf"
 	"github.com/influxdata/telegraf/plugins/inputs"
 )
-
-const undefined = "<undefined>"
-
-var plugin = undefined
-var version = undefined
-var goos = undefined
-var goarch = undefined
 
 type HueBridge struct {
 	Bridges [][]string `toml:"bridges"`
@@ -44,7 +37,7 @@ func NewHueBridge() *HueBridge {
 		Timeout: 5}
 }
 
-func (hb *HueBridge) SampleConfig() string {
+func (plugin *HueBridge) SampleConfig() string {
 	return `
   ## The Hue bridges to query (multiple tuples of base url, application key)
   ## To create a application key issue the following command line for the targeted Hue bridge:
@@ -57,71 +50,71 @@ func (hb *HueBridge) SampleConfig() string {
  `
 }
 
-func (hb *HueBridge) Description() string {
+func (plugin *HueBridge) Description() string {
 	return "Gather Hue Bridge status"
 }
 
-func (hb *HueBridge) Gather(a telegraf.Accumulator) error {
-	if len(hb.Bridges) == 0 {
+func (plugin *HueBridge) Gather(a telegraf.Accumulator) error {
+	if len(plugin.Bridges) == 0 {
 		return errors.New("huebridge: Empty bridge list")
 	}
-	for _, bridge := range hb.Bridges {
+	for _, bridge := range plugin.Bridges {
 		if len(bridge) != 2 {
 			return fmt.Errorf("huebridge: Invalid bridge entry: %s", bridge)
 		}
 		bridgeUrl := bridge[0]
 		username := bridge[1]
-		a.AddError(hb.processBridge(a, bridgeUrl, username))
+		a.AddError(plugin.processBridge(a, bridgeUrl, username))
 	}
 	return nil
 }
 
-func (hb *HueBridge) processBridge(a telegraf.Accumulator, bridgeUrl string, applicationKey string) error {
-	if hb.Debug {
-		hb.Log.Infof("Processing bridge: %s", bridgeUrl)
+func (plugin *HueBridge) processBridge(a telegraf.Accumulator, bridgeUrl string, applicationKey string) error {
+	if plugin.Debug {
+		plugin.Log.Infof("Processing bridge: %s", bridgeUrl)
 	}
-	devices, err := hb.fetchDevices(a, bridgeUrl, applicationKey)
+	devices, err := plugin.fetchDevices(a, bridgeUrl, applicationKey)
 	if err != nil {
 		return err
 	}
-	rooms, err := hb.fetchRooms(a, bridgeUrl, applicationKey)
+	rooms, err := plugin.fetchRooms(a, bridgeUrl, applicationKey)
 	if err != nil {
 		return err
 	}
-	lights, err := hb.fetchLights(a, bridgeUrl, applicationKey)
+	lights, err := plugin.fetchLights(a, bridgeUrl, applicationKey)
 	if err == nil {
-		hb.evalLights(a, bridgeUrl, lights, devices, rooms)
+		plugin.evalLights(a, bridgeUrl, lights, devices, rooms)
 	} else {
-		a.AddError(fmt.Errorf("Failed to eval lights (cause: %w)", err))
+		a.AddError(fmt.Errorf("failed to eval lights (cause: %w)", err))
 	}
-	temperatures, err := hb.fetchTemperatures(a, bridgeUrl, applicationKey)
+	temperatures, err := plugin.fetchTemperatures(a, bridgeUrl, applicationKey)
 	if err == nil {
-		hb.evalTemperatures(a, bridgeUrl, temperatures, devices)
+		plugin.evalTemperatures(a, bridgeUrl, temperatures, devices)
 	} else {
-		a.AddError(fmt.Errorf("Failed to eval temperatures (cause: %w)", err))
+		a.AddError(fmt.Errorf("failed to eval temperatures (cause: %w)", err))
 	}
-	lightLevels, err := hb.fetchLightLevels(a, bridgeUrl, applicationKey)
+	lightLevels, err := plugin.fetchLightLevels(a, bridgeUrl, applicationKey)
 	if err == nil {
-		hb.evalLightLevels(a, bridgeUrl, lightLevels, devices)
+		plugin.evalLightLevels(a, bridgeUrl, lightLevels, devices)
 	} else {
-		a.AddError(fmt.Errorf("Failed to eval light levels (cause: %w)", err))
+		a.AddError(fmt.Errorf("failed to eval light levels (cause: %w)", err))
 	}
-	motions, err := hb.fetchMotions(a, bridgeUrl, applicationKey)
+	motions, err := plugin.fetchMotions(a, bridgeUrl, applicationKey)
 	if err == nil {
-		hb.evalMotions(a, bridgeUrl, motions, devices)
+		plugin.evalMotions(a, bridgeUrl, motions, devices)
 	} else {
-		a.AddError(fmt.Errorf("Failed to eval motions (cause: %w)", err))
+		a.AddError(fmt.Errorf("failed to eval motions (cause: %w)", err))
 	}
-	devicePowers, err := hb.fetchDevicePowers(a, bridgeUrl, applicationKey)
+	devicePowers, err := plugin.fetchDevicePowers(a, bridgeUrl, applicationKey)
 	if err == nil {
-		hb.evalDevicePowers(a, bridgeUrl, devicePowers, devices)
+		plugin.evalDevicePowers(a, bridgeUrl, devicePowers, devices)
 	} else {
-		a.AddError(fmt.Errorf("Failed to eval motions (cause: %w)", err))
+		a.AddError(fmt.Errorf("failed to eval motions (cause: %w)", err))
 	}
 	return nil
 }
 
-func (hb *HueBridge) evalLights(a telegraf.Accumulator, bridgeUrl string, lights *lightsStatus, devices *devicesList, rooms *roomsList) {
+func (plugin *HueBridge) evalLights(a telegraf.Accumulator, bridgeUrl string, lights *lightsStatus, devices *devicesList, rooms *roomsList) {
 	for _, light := range lights.Data {
 		lightDeviceName, lightRoomName := light.Owner.getDeviceAndRoomName(devices, rooms)
 		tags := make(map[string]string)
@@ -138,7 +131,7 @@ func (hb *HueBridge) evalLights(a telegraf.Accumulator, bridgeUrl string, lights
 	}
 }
 
-func (hb *HueBridge) evalTemperatures(a telegraf.Accumulator, bridgeUrl string, temperatures *temperaturesStatus, devices *devicesList) {
+func (plugin *HueBridge) evalTemperatures(a telegraf.Accumulator, bridgeUrl string, temperatures *temperaturesStatus, devices *devicesList) {
 	for _, temperature := range temperatures.Data {
 		if temperature.Enabled && temperature.Temperature.TemperatureValid {
 			temperatureDeviceName := temperature.Owner.getDeviceName(devices)
@@ -152,7 +145,7 @@ func (hb *HueBridge) evalTemperatures(a telegraf.Accumulator, bridgeUrl string, 
 	}
 }
 
-func (hb *HueBridge) evalLightLevels(a telegraf.Accumulator, bridgeUrl string, lightLevels *lightLevelsStatus, devices *devicesList) {
+func (plugin *HueBridge) evalLightLevels(a telegraf.Accumulator, bridgeUrl string, lightLevels *lightLevelsStatus, devices *devicesList) {
 	for _, lightLevel := range lightLevels.Data {
 		if lightLevel.Enabled && lightLevel.Light.LightLevelValid {
 			lightLevelDeviceName := lightLevel.Owner.getDeviceName(devices)
@@ -167,7 +160,7 @@ func (hb *HueBridge) evalLightLevels(a telegraf.Accumulator, bridgeUrl string, l
 	}
 }
 
-func (hb *HueBridge) evalMotions(a telegraf.Accumulator, bridgeUrl string, motions *motionsStatus, devices *devicesList) {
+func (plugin *HueBridge) evalMotions(a telegraf.Accumulator, bridgeUrl string, motions *motionsStatus, devices *devicesList) {
 	for _, motion := range motions.Data {
 		if motion.Enabled && motion.Motion.MotionValid {
 			motionDeviceName := motion.Owner.getDeviceName(devices)
@@ -185,7 +178,7 @@ func (hb *HueBridge) evalMotions(a telegraf.Accumulator, bridgeUrl string, motio
 	}
 }
 
-func (hb *HueBridge) evalDevicePowers(a telegraf.Accumulator, bridgeUrl string, devicePowers *devicePowersStatus, devices *devicesList) {
+func (plugin *HueBridge) evalDevicePowers(a telegraf.Accumulator, bridgeUrl string, devicePowers *devicePowersStatus, devices *devicesList) {
 	for _, devicePower := range devicePowers.Data {
 		devicePowerDeviceName := devicePower.Owner.getDeviceName(devices)
 		tags := make(map[string]string)
@@ -270,8 +263,7 @@ type devicePowerState struct {
 }
 
 type devicesList struct {
-	Data      []deviceData `json:"data"`
-	findCache map[string]*deviceData
+	Data []deviceData `json:"data"`
 }
 
 func (ds *devicesList) findDeviceData(deviceId string) *deviceData {
@@ -349,77 +341,77 @@ func (rl *resourceLink) getDeviceAndRoomName(devices *devicesList, rooms *roomsL
 	return deviceName, roomName
 }
 
-func (hb *HueBridge) fetchLights(a telegraf.Accumulator, bridgeUrl string, applicationKey string) (*lightsStatus, error) {
+func (plugin *HueBridge) fetchLights(a telegraf.Accumulator, bridgeUrl string, applicationKey string) (*lightsStatus, error) {
 	var lightsStatus lightsStatus
 
-	_, err := hb.fetchJSON(bridgeUrl, applicationKey, "/clip/v2/resource/light", &lightsStatus)
+	_, err := plugin.fetchJSON(bridgeUrl, applicationKey, "/clip/v2/resource/light", &lightsStatus)
 	if err != nil {
 		return nil, err
 	}
 	return &lightsStatus, nil
 }
 
-func (hb *HueBridge) fetchTemperatures(a telegraf.Accumulator, bridgeUrl string, applicationKey string) (*temperaturesStatus, error) {
+func (plugin *HueBridge) fetchTemperatures(a telegraf.Accumulator, bridgeUrl string, applicationKey string) (*temperaturesStatus, error) {
 	var temperaturesStatus temperaturesStatus
 
-	_, err := hb.fetchJSON(bridgeUrl, applicationKey, "/clip/v2/resource/temperature", &temperaturesStatus)
+	_, err := plugin.fetchJSON(bridgeUrl, applicationKey, "/clip/v2/resource/temperature", &temperaturesStatus)
 	if err != nil {
 		return nil, err
 	}
 	return &temperaturesStatus, nil
 }
 
-func (hb *HueBridge) fetchLightLevels(a telegraf.Accumulator, bridgeUrl string, applicationKey string) (*lightLevelsStatus, error) {
+func (plugin *HueBridge) fetchLightLevels(a telegraf.Accumulator, bridgeUrl string, applicationKey string) (*lightLevelsStatus, error) {
 	var lightLevelsStatus lightLevelsStatus
 
-	_, err := hb.fetchJSON(bridgeUrl, applicationKey, "/clip/v2/resource/light_level", &lightLevelsStatus)
+	_, err := plugin.fetchJSON(bridgeUrl, applicationKey, "/clip/v2/resource/light_level", &lightLevelsStatus)
 	if err != nil {
 		return nil, err
 	}
 	return &lightLevelsStatus, nil
 }
 
-func (hb *HueBridge) fetchMotions(a telegraf.Accumulator, bridgeUrl string, applicationKey string) (*motionsStatus, error) {
+func (plugin *HueBridge) fetchMotions(a telegraf.Accumulator, bridgeUrl string, applicationKey string) (*motionsStatus, error) {
 	var motionsStatus motionsStatus
 
-	_, err := hb.fetchJSON(bridgeUrl, applicationKey, "/clip/v2/resource/motion", &motionsStatus)
+	_, err := plugin.fetchJSON(bridgeUrl, applicationKey, "/clip/v2/resource/motion", &motionsStatus)
 	if err != nil {
 		return nil, err
 	}
 	return &motionsStatus, nil
 }
 
-func (hb *HueBridge) fetchDevicePowers(a telegraf.Accumulator, bridgeUrl string, applicationKey string) (*devicePowersStatus, error) {
+func (plugin *HueBridge) fetchDevicePowers(a telegraf.Accumulator, bridgeUrl string, applicationKey string) (*devicePowersStatus, error) {
 	var devicePowersStatus devicePowersStatus
 
-	_, err := hb.fetchJSON(bridgeUrl, applicationKey, "/clip/v2/resource/device_power", &devicePowersStatus)
+	_, err := plugin.fetchJSON(bridgeUrl, applicationKey, "/clip/v2/resource/device_power", &devicePowersStatus)
 	if err != nil {
 		return nil, err
 	}
 	return &devicePowersStatus, nil
 }
 
-func (hb *HueBridge) fetchDevices(a telegraf.Accumulator, bridgeUrl string, applicationKey string) (*devicesList, error) {
+func (plugin *HueBridge) fetchDevices(a telegraf.Accumulator, bridgeUrl string, applicationKey string) (*devicesList, error) {
 	var devicesList devicesList
 
-	_, err := hb.fetchJSON(bridgeUrl, applicationKey, "/clip/v2/resource/device", &devicesList)
+	_, err := plugin.fetchJSON(bridgeUrl, applicationKey, "/clip/v2/resource/device", &devicesList)
 	if err != nil {
 		return nil, err
 	}
 	return &devicesList, nil
 }
 
-func (hb *HueBridge) fetchRooms(a telegraf.Accumulator, bridgeUrl string, applicationKey string) (*roomsList, error) {
+func (plugin *HueBridge) fetchRooms(a telegraf.Accumulator, bridgeUrl string, applicationKey string) (*roomsList, error) {
 	var roomsList roomsList
 
-	_, err := hb.fetchJSON(bridgeUrl, applicationKey, "/clip/v2/resource/room", &roomsList)
+	_, err := plugin.fetchJSON(bridgeUrl, applicationKey, "/clip/v2/resource/room", &roomsList)
 	if err != nil {
 		return nil, err
 	}
 	return &roomsList, nil
 }
 
-func (hb *HueBridge) fetchJSON(bridgeUrl string, applicationKey string, path string, v interface{}) (*url.URL, error) {
+func (plugin *HueBridge) fetchJSON(bridgeUrl string, applicationKey string, path string, v interface{}) (*url.URL, error) {
 	baseUrl, err := url.Parse(bridgeUrl)
 	if err != nil {
 		return nil, err
@@ -429,38 +421,38 @@ func (hb *HueBridge) fetchJSON(bridgeUrl string, applicationKey string, path str
 		return nil, err
 	}
 	jsonUrl := baseUrl.ResolveReference(pathUrl)
-	if hb.Debug {
-		hb.Log.Infof("Fetching JSON from: %s", jsonUrl)
+	if plugin.Debug {
+		plugin.Log.Infof("Fetching JSON from: %s", jsonUrl)
 	}
 	request, err := http.NewRequest("GET", jsonUrl.String(), nil)
 	if err != nil {
 		return jsonUrl, err
 	}
 	request.Header.Add("hue-application-key", applicationKey)
-	client := hb.getClient()
+	client := plugin.getClient()
 	response, err := client.Do(request)
 	if err != nil {
 		return jsonUrl, err
 	}
 	defer response.Body.Close()
 	if response.StatusCode != http.StatusOK {
-		return jsonUrl, fmt.Errorf("Failed to retrieve json data from %s (%s)", jsonUrl, response.Status)
+		return jsonUrl, fmt.Errorf("failed to retrieve json data from %s (%s)", jsonUrl, response.Status)
 	}
 	return jsonUrl, json.NewDecoder(response.Body).Decode(v)
 }
 
-func (hb *HueBridge) getClient() *http.Client {
-	if hb.cachedClient == nil {
+func (plugin *HueBridge) getClient() *http.Client {
+	if plugin.cachedClient == nil {
 		transport := &http.Transport{
-			ResponseHeaderTimeout: time.Duration(hb.Timeout) * time.Second,
+			ResponseHeaderTimeout: time.Duration(plugin.Timeout) * time.Second,
 			TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
 		}
-		hb.cachedClient = &http.Client{
+		plugin.cachedClient = &http.Client{
 			Transport: transport,
-			Timeout:   time.Duration(hb.Timeout) * time.Second,
+			Timeout:   time.Duration(plugin.Timeout) * time.Second,
 		}
 	}
-	return hb.cachedClient
+	return plugin.cachedClient
 }
 
 func init() {
