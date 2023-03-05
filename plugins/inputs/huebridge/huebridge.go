@@ -89,19 +89,19 @@ func (plugin *HueBridge) processBridge(a telegraf.Accumulator, bridgeUrl string,
 	}
 	temperatures, err := plugin.fetchTemperatures(a, bridgeUrl, applicationKey)
 	if err == nil {
-		plugin.evalTemperatures(a, bridgeUrl, temperatures, devices)
+		plugin.evalTemperatures(a, bridgeUrl, temperatures, devices, rooms)
 	} else {
 		a.AddError(fmt.Errorf("failed to eval temperatures (cause: %w)", err))
 	}
 	lightLevels, err := plugin.fetchLightLevels(a, bridgeUrl, applicationKey)
 	if err == nil {
-		plugin.evalLightLevels(a, bridgeUrl, lightLevels, devices)
+		plugin.evalLightLevels(a, bridgeUrl, lightLevels, devices, rooms)
 	} else {
 		a.AddError(fmt.Errorf("failed to eval light levels (cause: %w)", err))
 	}
 	motions, err := plugin.fetchMotions(a, bridgeUrl, applicationKey)
 	if err == nil {
-		plugin.evalMotions(a, bridgeUrl, motions, devices)
+		plugin.evalMotions(a, bridgeUrl, motions, devices, rooms)
 	} else {
 		a.AddError(fmt.Errorf("failed to eval motions (cause: %w)", err))
 	}
@@ -131,12 +131,13 @@ func (plugin *HueBridge) evalLights(a telegraf.Accumulator, bridgeUrl string, li
 	}
 }
 
-func (plugin *HueBridge) evalTemperatures(a telegraf.Accumulator, bridgeUrl string, temperatures *temperaturesStatus, devices *devicesList) {
+func (plugin *HueBridge) evalTemperatures(a telegraf.Accumulator, bridgeUrl string, temperatures *temperaturesStatus, devices *devicesList, rooms *roomsList) {
 	for _, temperature := range temperatures.Data {
 		if temperature.Enabled && temperature.Temperature.TemperatureValid {
-			temperatureDeviceName := temperature.Owner.getDeviceName(devices)
+			temperatureDeviceName, temperatureRoomName := temperature.Owner.getDeviceAndRoomName(devices, rooms)
 			tags := make(map[string]string)
 			tags["huebridge_url"] = bridgeUrl
+			tags["huebridge_room"] = temperatureRoomName
 			tags["huebridge_device"] = temperatureDeviceName
 			fields := make(map[string]interface{})
 			fields["temperature"] = temperature.Temperature.Temperature
@@ -145,12 +146,13 @@ func (plugin *HueBridge) evalTemperatures(a telegraf.Accumulator, bridgeUrl stri
 	}
 }
 
-func (plugin *HueBridge) evalLightLevels(a telegraf.Accumulator, bridgeUrl string, lightLevels *lightLevelsStatus, devices *devicesList) {
+func (plugin *HueBridge) evalLightLevels(a telegraf.Accumulator, bridgeUrl string, lightLevels *lightLevelsStatus, devices *devicesList, rooms *roomsList) {
 	for _, lightLevel := range lightLevels.Data {
 		if lightLevel.Enabled && lightLevel.Light.LightLevelValid {
-			lightLevelDeviceName := lightLevel.Owner.getDeviceName(devices)
+			lightLevelDeviceName, lightLevelRoomName := lightLevel.Owner.getDeviceAndRoomName(devices, rooms)
 			tags := make(map[string]string)
 			tags["huebridge_url"] = bridgeUrl
+			tags["huebridge_room"] = lightLevelRoomName
 			tags["huebridge_device"] = lightLevelDeviceName
 			fields := make(map[string]interface{})
 			fields["light_level"] = lightLevel.Light.LightLevel
@@ -160,12 +162,13 @@ func (plugin *HueBridge) evalLightLevels(a telegraf.Accumulator, bridgeUrl strin
 	}
 }
 
-func (plugin *HueBridge) evalMotions(a telegraf.Accumulator, bridgeUrl string, motions *motionsStatus, devices *devicesList) {
+func (plugin *HueBridge) evalMotions(a telegraf.Accumulator, bridgeUrl string, motions *motionsStatus, devices *devicesList, rooms *roomsList) {
 	for _, motion := range motions.Data {
 		if motion.Enabled && motion.Motion.MotionValid {
-			motionDeviceName := motion.Owner.getDeviceName(devices)
+			motionDeviceName, motionRoomName := motion.Owner.getDeviceAndRoomName(devices, rooms)
 			tags := make(map[string]string)
 			tags["huebridge_url"] = bridgeUrl
+			tags["huebridge_room"] = motionRoomName
 			tags["huebridge_device"] = motionDeviceName
 			fields := make(map[string]interface{})
 			if motion.Motion.Motion {
