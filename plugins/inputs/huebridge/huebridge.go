@@ -19,12 +19,14 @@ import (
 
 	"github.com/influxdata/telegraf"
 	"github.com/influxdata/telegraf/plugins/inputs"
+	"golang.org/x/exp/slices"
 )
 
 type HueBridge struct {
-	Bridges [][]string `toml:"bridges"`
-	Timeout int        `toml:"timeout"`
-	Debug   bool       `toml:"debug"`
+	Bridges         [][]string `toml:"bridges"`
+	Timeout         int        `toml:"timeout"`
+	RoomAssignments [][]string `toml:"room_assignments"`
+	Debug           bool       `toml:"debug"`
 
 	Log telegraf.Logger
 
@@ -45,6 +47,10 @@ func (plugin *HueBridge) SampleConfig() string {
   bridges = [["https://<insert IP or DNS name>", "<insert application key>"]]
   ## The http timeout to use (in seconds)
   # timeout = 5
+  ## In case a device cannot be assigned to a room (e.g. a motion sensor), the following option
+  ## allows a manual assignment. Every sub-array defines an assignment. The 1st element names
+  ## the room and the following elements the devices to assign to this room.
+  # room_assignments = [["room", "device 1"]]
   ## Enable debug output
   # debug = false
  `
@@ -116,7 +122,7 @@ func (plugin *HueBridge) processBridge(a telegraf.Accumulator, bridgeUrl string,
 
 func (plugin *HueBridge) evalLights(a telegraf.Accumulator, bridgeUrl string, lights *lightsStatus, devices *devicesList, rooms *roomsList) {
 	for _, light := range lights.Data {
-		lightDeviceName, lightRoomName := light.Owner.getDeviceAndRoomName(devices, rooms)
+		lightDeviceName, lightRoomName := light.Owner.getDeviceAndRoomName(devices, rooms, plugin.RoomAssignments)
 		tags := make(map[string]string)
 		tags["huebridge_url"] = bridgeUrl
 		tags["huebridge_room"] = lightRoomName
@@ -134,7 +140,7 @@ func (plugin *HueBridge) evalLights(a telegraf.Accumulator, bridgeUrl string, li
 func (plugin *HueBridge) evalTemperatures(a telegraf.Accumulator, bridgeUrl string, temperatures *temperaturesStatus, devices *devicesList, rooms *roomsList) {
 	for _, temperature := range temperatures.Data {
 		if temperature.Enabled && temperature.Temperature.TemperatureValid {
-			temperatureDeviceName, temperatureRoomName := temperature.Owner.getDeviceAndRoomName(devices, rooms)
+			temperatureDeviceName, temperatureRoomName := temperature.Owner.getDeviceAndRoomName(devices, rooms, plugin.RoomAssignments)
 			tags := make(map[string]string)
 			tags["huebridge_url"] = bridgeUrl
 			tags["huebridge_room"] = temperatureRoomName
@@ -149,7 +155,7 @@ func (plugin *HueBridge) evalTemperatures(a telegraf.Accumulator, bridgeUrl stri
 func (plugin *HueBridge) evalLightLevels(a telegraf.Accumulator, bridgeUrl string, lightLevels *lightLevelsStatus, devices *devicesList, rooms *roomsList) {
 	for _, lightLevel := range lightLevels.Data {
 		if lightLevel.Enabled && lightLevel.Light.LightLevelValid {
-			lightLevelDeviceName, lightLevelRoomName := lightLevel.Owner.getDeviceAndRoomName(devices, rooms)
+			lightLevelDeviceName, lightLevelRoomName := lightLevel.Owner.getDeviceAndRoomName(devices, rooms, plugin.RoomAssignments)
 			tags := make(map[string]string)
 			tags["huebridge_url"] = bridgeUrl
 			tags["huebridge_room"] = lightLevelRoomName
@@ -165,7 +171,7 @@ func (plugin *HueBridge) evalLightLevels(a telegraf.Accumulator, bridgeUrl strin
 func (plugin *HueBridge) evalMotions(a telegraf.Accumulator, bridgeUrl string, motions *motionsStatus, devices *devicesList, rooms *roomsList) {
 	for _, motion := range motions.Data {
 		if motion.Enabled && motion.Motion.MotionValid {
-			motionDeviceName, motionRoomName := motion.Owner.getDeviceAndRoomName(devices, rooms)
+			motionDeviceName, motionRoomName := motion.Owner.getDeviceAndRoomName(devices, rooms, plugin.RoomAssignments)
 			tags := make(map[string]string)
 			tags["huebridge_url"] = bridgeUrl
 			tags["huebridge_room"] = motionRoomName
@@ -328,16 +334,25 @@ func (rl *resourceLink) getDeviceName(devices *devicesList) string {
 	return deviceName
 }
 
-func (rl *resourceLink) getDeviceAndRoomName(devices *devicesList, rooms *roomsList) (string, string) {
+func (rl *resourceLink) getDeviceAndRoomName(devices *devicesList, rooms *roomsList, roomAssignments [][]string) (string, string) {
 	deviceName := undefinedDevice
 	roomName := unassignedDevice
 	if rl.Rtype == "device" {
 		device := devices.findDeviceData(rl.Rid)
 		if device != nil {
 			deviceName = device.Metadata.Name
-			room := rooms.findDeviceRoomData(device.Id)
-			if room != nil {
-				roomName = room.Metadata.Name
+			for _, assignment := range roomAssignments {
+				index := slices.Index(assignment, deviceName)
+				if index > 0 {
+					roomName = assignment[0]
+					break
+				}
+			}
+			if roomName == unassignedDevice {
+				room := rooms.findDeviceRoomData(device.Id)
+				if room != nil {
+					roomName = room.Metadata.Name
+				}
 			}
 		}
 	}
