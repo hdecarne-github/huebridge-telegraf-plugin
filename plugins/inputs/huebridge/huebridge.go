@@ -36,7 +36,8 @@ type HueBridge struct {
 func NewHueBridge() *HueBridge {
 	return &HueBridge{
 		Bridges: [][]string{},
-		Timeout: 5}
+		Timeout: 10,
+	}
 }
 
 func (plugin *HueBridge) SampleConfig() string {
@@ -46,7 +47,7 @@ func (plugin *HueBridge) SampleConfig() string {
   ## curl -X POST http://<bridge IP or DNS name>/api -H 'Content-Type: application/json' -d '{"devicetype":"huebridge-telegraf-plugin"}'
   bridges = [["https://<insert IP or DNS name>", "<insert application key>"]]
   ## The http timeout to use (in seconds)
-  # timeout = 5
+  # timeout = 10
   ## In case a device cannot be assigned to a room (e.g. a motion sensor), the following option
   ## allows a manual assignment. Every sub-array defines an assignment. The 1st element names
   ## the room and the following elements the devices to assign to this room.
