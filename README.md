@@ -24,7 +24,7 @@ To use it you have to create a plugin specific config file (e.g. /etc/telegraf/h
   ## curl -X POST http://<bridge IP or DNS name>/api -H 'Content-Type: application/json' -d '{"devicetype":"huebridge-telegraf-plugin"}'
   bridges = [["https://<insert IP or DNS name>", "<insert application key>"]]
   ## The http timeout to use (in seconds)
-  # timeout = 5
+  # timeout = 10
   ## Enable debug output
   # debug = false
 ```
