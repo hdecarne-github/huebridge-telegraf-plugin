@@ -11,9 +11,9 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-### v0.1.0 (2022-05-01)
-* Initial release
-
 ### v0.2.0 (2024-01-14)
 * Set default web client timeout to 10s
 * Update dependencies
+
+### v0.1.0 (2022-05-01)
+* Initial release
