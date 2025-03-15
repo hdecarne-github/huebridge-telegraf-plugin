@@ -1,6 +1,11 @@
 [![Downloads](https://img.shields.io/github/downloads/hdecarne-github/huebridge-telegraf-plugin/total.svg)](https://github.com/hdecarne-github/huebridge-telegraf-plugin/releases)
 [![Build](https://github.com/hdecarne-github/huebridge-telegraf-plugin/actions/workflows/build.yml/badge.svg)](https://github.com/hdecarne-github/huebridge-telegraf-plugin/actions/workflows/build.yml)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=hdecarne-github_huebridge-telegraf-plugin&metric=coverage)](https://sonarcloud.io/summary/new_code?id=hdecarne-github_huebridge-telegraf-plugin)
+
+> [!NOTE]
+> From Telegraf release v1.34.0 on this plugin is a core plugin of Telegraf
+> and no longer needs to be installed separately as an external plugin.
+>
+> See https://github.com/influxdata/telegraf/tree/master/plugins/inputs/huebridge for further details.
 
 ## About huebridge-telegraf-plugin
 This [Telegraf](https://github.com/influxdata/telegraf) input plugin gathers stats from [Hue Bridge](https://www.philips-hue.com/) devices. It uses the device's [CLIP API](https://developers.meethue.com/develop/hue-api-v2/) interface to retrieve the stats. Lights status as well as Motion sensor data is retrieved.
